@@ -214,6 +214,23 @@ fail_close_file:
 }
 
 /*
+ Slope
+*/
+
+static double calculate_avg_change(double const* data) {
+	double changes[NUM_YEARS - 1];
+	double sum = 0;
+
+	size_t i;
+
+	for (i = 0; i < NUM_YEARS - 1; ++i) {
+		sum += data[i + 1] - data[i];
+	}
+
+	return sum / (NUM_YEARS - 1);
+}
+
+/*
  Extrapolation
 */
 
@@ -226,13 +243,12 @@ static void extrapolate_on_data(
 		double const* data,
 		double slope,
 		double* extrapolate_data) {
-
 	size_t i;
 	double extrapolate_average;
 	size_t years_increase;
 
 	for (i = 0; i < EXTRAPOLATE_DATA_SIZE; ++i) {
-		years_increase = i * 5;
+		years_increase = i * EXTRAPOLATE_YEAR_INCREMENT;
 
 		extrapolate_data[i] = data[NUM_YEARS - 1] +
 			(years_increase * slope);
@@ -241,8 +257,7 @@ static void extrapolate_on_data(
 
 int main(int argc, char** argv) {
 	double data[NUM_YEARS];
-	double sum;
-	double average;
+	double avg_change;
 	size_t i;
 
 	double extrapolate_data[EXTRAPOLATE_DATA_SIZE];
@@ -254,20 +269,17 @@ int main(int argc, char** argv) {
 
 	read_file_for_data(data, "GMSL_TPJAOS_5.0_199209_202011.txt");
 
-	for (i = 0; i < NUM_YEARS; ++i) {
-		sum += data[i];
-	}
-	average = sum / NUM_YEARS;
+	avg_change = calculate_avg_change(data);
 
-	printf("Average: %.3f\n", average);
+	printf("Average: %.3f\n", avg_change);
 	printf("\n");
 
-	extrapolate_on_data(data, average, extrapolate_data);
+	extrapolate_on_data(data, avg_change, extrapolate_data);
 
 	printf("Predictions on GMSL:\n");
 	for (i = 0; i < EXTRAPOLATE_DATA_SIZE; ++i) {
-		printf("%d: %.3f\n",
-			END_YEAR + (i * 5),
+		printf("%lu: %.3f\n",
+			END_YEAR + (i * EXTRAPOLATE_YEAR_INCREMENT),
 			extrapolate_data[i]);
 	}
 
